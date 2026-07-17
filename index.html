@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roulette – Europäisch (Spielgeld)</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <h1>Roulette</h1>
+
+  <div id="hud">
+    <div><span class="label">Guthaben</span><span class="value" id="bal">0 €</span></div>
+    <div><span class="label">Einsatz</span><span class="value" id="staked">0 €</span></div>
+  </div>
+
+  <div id="wheelWrap">
+    <canvas id="wheelCanvas"></canvas>
+    <canvas id="ballCanvas"></canvas>
+  </div>
+
+  <div id="resultBanner"></div>
+  <div id="historyBar"></div>
+
+  <div id="tableOuter">
+    <div id="tableWrap">
+      <div id="zeroCell"></div>
+      <div id="gridStage"></div>
+      <div id="colBtns"></div>
+    </div>
+    <div id="dozensRow"></div>
+    <div id="outsideRow"></div>
+  </div>
+
+  <div id="chipTray"></div>
+
+  <div id="controls">
+    <button class="action secondary" id="undoBtn">Zurück</button>
+    <button class="action secondary" id="clearBtn">Löschen</button>
+    <button class="action" id="spinBtn">Drehen</button>
+  </div>
+</div>
+
+<div id="brokeModal">
+  <div class="modal-box">
+    <h2>Guthaben aufgebraucht</h2>
+    <p>Dein Guthaben reicht für keinen Einsatz mehr.</p>
+    <button class="action" id="brokeReset">Neu starten (1000 €)</button>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/bets.js"></script>
+<script src="js/wheel.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
