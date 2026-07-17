@@ -6,7 +6,7 @@ let wheelRadius = 0, centerX = 0, centerY = 0;
 let pocketRadius = 0, outerBallRadius = 0;
 
 const WHEEL_COLORS = { green: '#1c8a4a', red: '#a5192b', black: '#1a1a1a' };
-const PERSPECTIVE_Y = 0.62; // Y-Stauchung für Kipp-/3D-Effekt
+const PERSPECTIVE_Y = 1.0; // 1.0 = reine Draufsicht (kein Kippen/keine Ellipse)
 
 // Persistenter Zustand zwischen Spins, damit nichts "springt"
 const ballState = { angle: -Math.PI / 2, radius: 0 };
@@ -133,10 +133,10 @@ function drawBall(angle, radius) {
   const y = centerY + Math.sin(angle) * radius * PERSPECTIVE_Y;
   const r = Math.max(3, wheelRadius * 0.035);
 
-  // Schatten auf der Bahn
+  // Schatten (Draufsicht: leichter Versatz simuliert Lichtquelle von oben)
   ctx.beginPath();
-  ctx.ellipse(x, y + r * 0.6, r * 1.15, r * 0.5, 0, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.arc(x + r * 0.25, y + r * 0.25, r * 1.05, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.fill();
 
   // Kugel
@@ -153,10 +153,10 @@ function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
 // Dreht Rotor + Kugel physikalisch plausibel und lässt die Kugel exakt bei der Zielzahl landen.
 function spinBallTo(winningNumber, durationMs, onDone) {
-  // Rotor: unabhängige Drehung, Gegenrichtung zur Kugel, keine Zielvorgabe nötig
+  // Rotor: unabhängige Drehung, Gegenrichtung zur Kugel, deutlich langsamer als die Kugel
   const wheelStart = wheelState.rot;
-  const wheelRotations = 2.5 + Math.random() * 1.5;
-  const wheelEnd = wheelStart - (wheelRotations * Math.PI * 2 + Math.random() * Math.PI * 2);
+  const wheelRotations = 0.6 + Math.random() * 0.6;
+  const wheelEnd = wheelStart - (wheelRotations * Math.PI * 2 + Math.random() * (Math.PI / 2));
 
   // Kugel muss bei Landung exakt über der Zielzahl stehen -> Zielwinkel hängt von der Rotor-Endposition ab
   const targetAbsAngle = angleForNumber(winningNumber) + wheelEnd;
