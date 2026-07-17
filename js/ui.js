@@ -264,11 +264,6 @@ function showBrokeModal() {
   els.broke.classList.add('open');
 }
 
-window.addEventListener('resize', () => {
-  resizeWheel();
-  drawWheel();
-});
-
 document.addEventListener('DOMContentLoaded', () => {
   initWheel($('wheelCanvas'), $('ballCanvas'));
   initUI();
