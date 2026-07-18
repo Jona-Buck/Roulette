@@ -43,7 +43,6 @@ function buildChipTray() {
   CHIP_VALUES.forEach((val, i) => {
     const c = document.createElement('button');
     c.className = 'chip chip-' + val;
-    c.textContent = val;
     c.dataset.val = val;
     if (i === 1) c.classList.add('selected');
     c.addEventListener('click', () => {
@@ -206,7 +205,7 @@ function spawnChipMarker(el, amount) {
     marker.className = 'chip-marker';
     el.appendChild(marker);
   }
-  marker.textContent = amount;
+  marker.dataset.amt = amount;
   marker.classList.remove('pop');
   void marker.offsetWidth;
   marker.classList.add('pop');
