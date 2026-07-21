@@ -157,11 +157,13 @@ function buildTable() {
 
   // Dutzend
   els.dozensRow.innerHTML = '';
-  const dozenLabels = ['1. DUTZEND (1-12)', '2. DUTZEND (13-24)', '3. DUTZEND (25-36)'];
+  const dozenLabels = ['1 – 12', '13 – 24', '25 – 36'];
+  const dozenTitles = ['1. Dutzend (1-12)', '2. Dutzend (13-24)', '3. Dutzend (25-36)'];
   for (let i = 0; i < 3; i++) {
     const btn = document.createElement('div');
     btn.className = 'outbet dozen';
     btn.textContent = dozenLabels[i];
+    btn.title = dozenTitles[i];
     btn.style.width = (CELL_W * 4) + 'px';
     btn.addEventListener('click', () => onZoneClick(btn, 'dozen', dozenNumbers(i)));
     els.dozensRow.appendChild(btn);

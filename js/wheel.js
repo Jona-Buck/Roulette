@@ -70,9 +70,10 @@ function drawWheel(rotation) {
     centerX - wheelRadius * 0.25, centerY - wheelRadius * 0.3, wheelRadius * 0.1,
     centerX, centerY, wheelRadius
   );
-  woodGrad.addColorStop(0, '#7a4a24');
-  woodGrad.addColorStop(0.55, '#4a2c12');
-  woodGrad.addColorStop(1, '#1c0f05');
+  woodGrad.addColorStop(0, '#8a5a2e');
+  woodGrad.addColorStop(0.35, '#5a3416');
+  woodGrad.addColorStop(0.7, '#331d0c');
+  woodGrad.addColorStop(1, '#150b04');
   ctx.beginPath();
   ctx.arc(centerX, centerY, wheelRadius, 0, Math.PI * 2);
   ctx.fillStyle = woodGrad;
@@ -92,11 +93,15 @@ function drawWheel(rotation) {
   const brassRingOuter = wheelRadius * 0.86;
   const brassRingInner = pocketRadius + (brassRingOuter - pocketRadius) * 0.25;
   const brassGrad = ctx.createLinearGradient(centerX - wheelRadius, centerY - wheelRadius, centerX + wheelRadius, centerY + wheelRadius);
-  brassGrad.addColorStop(0, '#8a6a2c');
-  brassGrad.addColorStop(0.25, '#f2d98a');
-  brassGrad.addColorStop(0.5, '#a9812f');
-  brassGrad.addColorStop(0.75, '#f2d98a');
-  brassGrad.addColorStop(1, '#7a5c1f');
+  brassGrad.addColorStop(0,    '#6b4f1e');
+  brassGrad.addColorStop(0.12, '#f2d98a');
+  brassGrad.addColorStop(0.24, '#8a6a2c');
+  brassGrad.addColorStop(0.38, '#fff3d0');
+  brassGrad.addColorStop(0.5,  '#a9812f');
+  brassGrad.addColorStop(0.62, '#fff3d0');
+  brassGrad.addColorStop(0.76, '#8a6a2c');
+  brassGrad.addColorStop(0.88, '#f2d98a');
+  brassGrad.addColorStop(1,    '#6b4f1e');
   ctx.beginPath();
   ctx.arc(centerX, centerY, brassRingOuter, 0, Math.PI * 2);
   ctx.arc(centerX, centerY, brassRingInner, 0, Math.PI * 2, true);
@@ -121,9 +126,9 @@ function drawWheel(rotation) {
       centerX + Math.cos(mid) * pocketRadius * 0.35, centerY + Math.sin(mid) * pocketRadius * 0.35, 2,
       centerX, centerY, pocketRadius
     );
-    if (col === 'red') { pocketGrad.addColorStop(0, '#d0495a'); pocketGrad.addColorStop(1, '#6e1420'); }
-    else if (col === 'black') { pocketGrad.addColorStop(0, '#3a3a3a'); pocketGrad.addColorStop(1, '#050505'); }
-    else { pocketGrad.addColorStop(0, '#3fbd7c'); pocketGrad.addColorStop(1, '#0c4223'); }
+    if (col === 'red') { pocketGrad.addColorStop(0, '#e2637a'); pocketGrad.addColorStop(0.55, '#a52f3f'); pocketGrad.addColorStop(1, '#4a0e16'); }
+    else if (col === 'black') { pocketGrad.addColorStop(0, '#4a4a4a'); pocketGrad.addColorStop(0.55, '#1c1c1c'); pocketGrad.addColorStop(1, '#000000'); }
+    else { pocketGrad.addColorStop(0, '#54d691'); pocketGrad.addColorStop(0.55, '#1c8a4a'); pocketGrad.addColorStop(1, '#06301a'); }
 
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
