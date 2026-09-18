@@ -3,28 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0b3d24">
+<meta name="theme-color" content="#050505">
 <title>Roulette – Europäisch (Spielgeld)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="sparkle-field" aria-hidden="true">
-  <span class="spark" style="--x:10%; --y:16%; --d:0s;"></span>
-  <span class="spark" style="--x:88%; --y:12%; --d:1.6s;"></span>
-  <span class="spark" style="--x:6%; --y:66%; --d:2.8s;"></span>
-  <span class="spark" style="--x:93%; --y:70%; --d:0.9s;"></span>
-  <span class="spark" style="--x:48%; --y:5%; --d:2.1s;"></span>
-  <span class="spark" style="--x:75%; --y:44%; --d:3.4s;"></span>
-</div>
-
 <div id="app">
   <header id="siteHeader">
     <h1>Roulette</h1>
-    <div class="flourish"><span class="diamond"></span></div>
-    <p id="tagline">Europäisch &middot; Spielgeld</p>
   </header>
 
   <div id="hud">
@@ -33,63 +22,60 @@
     <div><span class="label">Einsatz</span><span class="value" id="staked">0 €</span></div>
   </div>
 
-  <section id="wheelPanel" class="panel">
-    <div id="wheelStage">
-      <div id="wheelWrap">
-        <canvas id="wheelCanvas"></canvas>
-        <canvas id="ballCanvas"></canvas>
-        <div id="wheelGlare"></div>
+  <div id="stageLayout">
+    <section id="wheelZone">
+      <div id="wheelStage">
+        <div id="wheelWrap">
+          <canvas id="wheelCanvas"></canvas>
+          <canvas id="ballCanvas"></canvas>
+        </div>
       </div>
-    </div>
-    <div id="resultBanner"></div>
-    <div class="panel-divider"></div>
-    <div id="historyPanel">
-      <span class="panel-label">Verlauf</span>
-      <div id="historyBar"></div>
-    </div>
-  </section>
-
-  <section id="tablePanel" class="panel">
-    <div id="tableOuter">
-      <div id="tableWrap">
-        <div id="zeroCell"></div>
-        <div id="gridStage"></div>
-        <div id="colBtns"></div>
+      <div id="resultBanner"></div>
+      <div id="historyPanel">
+        <span class="panel-label">Verlauf</span>
+        <div id="historyBar"></div>
       </div>
-      <div id="dozensRow"></div>
-      <div id="outsideRow"></div>
-    </div>
+    </section>
 
-    <div class="panel-divider"></div>
+    <section id="tableZone">
+      <div id="tableOuter">
+        <div id="tableWrap">
+          <div id="zeroCell"></div>
+          <div id="gridStage"></div>
+          <div id="colBtns"></div>
+        </div>
+        <div id="dozensRow"></div>
+        <div id="outsideRow"></div>
+      </div>
 
-    <div id="trayRow">
-      <span class="panel-label">Chips</span>
-      <div id="chipTray"></div>
-    </div>
+      <div id="trayRow">
+        <div id="chipTray"></div>
+      </div>
 
-    <div id="controls">
-      <button class="action secondary" id="undoBtn">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-1"/></svg>
-        <span>Zurück</span>
-      </button>
-      <button class="action secondary" id="clearBtn">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12"/></svg>
-        <span>Löschen</span>
-      </button>
-      <button class="action" id="spinBtn">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12a8 8 0 1 1-3-6.2"/><path d="M20 4v5h-5"/></svg>
-        <span>Drehen</span>
-      </button>
-    </div>
-  </section>
+      <div id="controls">
+        <button class="action secondary" id="undoBtn">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-1"/></svg>
+          <span>Zurück</span>
+        </button>
+        <button class="action secondary" id="clearBtn">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12"/></svg>
+          <span>Löschen</span>
+        </button>
+        <button class="action primary" id="spinBtn">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-3-6.2"/><path d="M20 4v5h-5"/></svg>
+          <span>Drehen</span>
+        </button>
+      </div>
+    </section>
+  </div>
 </div>
 
 <div id="brokeModal">
   <div class="modal-box">
     <h2>Guthaben aufgebraucht</h2>
     <p>Dein Guthaben reicht für keinen Einsatz mehr.</p>
-    <button class="action" id="brokeReset">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12a8 8 0 1 1-3-6.2"/><path d="M20 4v5h-5"/></svg>
+    <button class="action primary" id="brokeReset">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-3-6.2"/><path d="M20 4v5h-5"/></svg>
       <span>Neu starten (1000 €)</span>
     </button>
   </div>
