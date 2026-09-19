@@ -5,7 +5,7 @@ let wheelCanvas, wheelCtx, ballCanvas, ballCtx;
 let wheelRadius = 0, centerX = 0, centerY = 0;
 let pocketRadius = 0, outerBallRadius = 0;
 
-const WHEEL_FONT = "'Cinzel', Georgia, serif";
+const WHEEL_FONT = "'IBM Plex Mono', monospace";
 const PERSPECTIVE_Y = 1.0; // 1.0 = reine Draufsicht (kein Kippen/keine Ellipse)
 
 // Persistenter Zustand zwischen Spins, damit nichts "springt"
@@ -65,55 +65,13 @@ function drawWheel(rotation) {
   ctx.scale(1, PERSPECTIVE_Y);
   ctx.translate(-centerX, -centerY);
 
-  // --- Holz-Außenrand (Bowl) ---
-  const woodGrad = ctx.createRadialGradient(
-    centerX - wheelRadius * 0.25, centerY - wheelRadius * 0.3, wheelRadius * 0.1,
-    centerX, centerY, wheelRadius
-  );
-  woodGrad.addColorStop(0, '#8a5a2e');
-  woodGrad.addColorStop(0.35, '#5a3416');
-  woodGrad.addColorStop(0.7, '#331d0c');
-  woodGrad.addColorStop(1, '#150b04');
+  // --- Filz-Untergrund (ersetzt Holz-Bowl) ---
   ctx.beginPath();
   ctx.arc(centerX, centerY, wheelRadius, 0, Math.PI * 2);
-  ctx.fillStyle = woodGrad;
+  ctx.fillStyle = '#08331f';
   ctx.fill();
 
-  // Holzmaserung: konzentrische Ringe mit leichter Transparenz
-  for (let i = 0; i < 6; i++) {
-    const r = wheelRadius * (0.98 - i * 0.045);
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
-    ctx.strokeStyle = i % 2 === 0 ? 'rgba(0,0,0,0.12)' : 'rgba(255,214,150,0.08)';
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-  }
-
-  // --- Messing-Zierring ---
-  const brassRingOuter = wheelRadius * 0.86;
-  const brassRingInner = pocketRadius + (brassRingOuter - pocketRadius) * 0.25;
-  const brassGrad = ctx.createLinearGradient(centerX - wheelRadius, centerY - wheelRadius, centerX + wheelRadius, centerY + wheelRadius);
-  brassGrad.addColorStop(0,    '#6b4f1e');
-  brassGrad.addColorStop(0.12, '#f2d98a');
-  brassGrad.addColorStop(0.24, '#8a6a2c');
-  brassGrad.addColorStop(0.38, '#fff3d0');
-  brassGrad.addColorStop(0.5,  '#a9812f');
-  brassGrad.addColorStop(0.62, '#fff3d0');
-  brassGrad.addColorStop(0.76, '#8a6a2c');
-  brassGrad.addColorStop(0.88, '#f2d98a');
-  brassGrad.addColorStop(1,    '#6b4f1e');
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, brassRingOuter, 0, Math.PI * 2);
-  ctx.arc(centerX, centerY, brassRingInner, 0, Math.PI * 2, true);
-  ctx.fillStyle = brassGrad;
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, brassRingOuter, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255,240,200,0.5)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // --- Zahlenfelder ---
+  // --- Zahlenfelder: flache Füllung, kein Verlauf ---
   const seg = (Math.PI * 2) / WHEEL_N;
   for (let i = 0; i < WHEEL_N; i++) {
     const n = WHEEL_ORDER[i];
@@ -122,105 +80,65 @@ function drawWheel(rotation) {
     const a1 = mid + seg / 2;
     const col = numColor(n);
 
-    const pocketGrad = ctx.createRadialGradient(
-      centerX + Math.cos(mid) * pocketRadius * 0.35, centerY + Math.sin(mid) * pocketRadius * 0.35, 2,
-      centerX, centerY, pocketRadius
-    );
-    if (col === 'red') { pocketGrad.addColorStop(0, '#e2637a'); pocketGrad.addColorStop(0.55, '#a52f3f'); pocketGrad.addColorStop(1, '#4a0e16'); }
-    else if (col === 'black') { pocketGrad.addColorStop(0, '#4a4a4a'); pocketGrad.addColorStop(0.55, '#1c1c1c'); pocketGrad.addColorStop(1, '#000000'); }
-    else { pocketGrad.addColorStop(0, '#54d691'); pocketGrad.addColorStop(0.55, '#1c8a4a'); pocketGrad.addColorStop(1, '#06301a'); }
-
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
     ctx.arc(centerX, centerY, pocketRadius, a0, a1);
     ctx.closePath();
-    ctx.fillStyle = pocketGrad;
+    ctx.fillStyle = col === 'red' ? '#8c1f2c' : col === 'black' ? '#0a0a0a' : '#0f4a2c';
     ctx.fill();
 
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate(mid);
-    ctx.fillStyle = '#f6ecd4';
+    ctx.fillStyle = '#e9e2d0';
     ctx.font = `600 ${Math.max(10, pocketRadius * 0.115)}px ${WHEEL_FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.6)';
-    ctx.shadowBlur = 2;
     ctx.fillText(String(n), 0, -pocketRadius * 0.88);
     ctx.restore();
   }
 
-  // --- Metallische Fach-Trenner ---
+  // --- Dünne Trennlinien zwischen den Feldern (gedämpftes Bronze) ---
   for (let i = 0; i < WHEEL_N; i++) {
     const a = angleForIndex(i) + rotation - seg / 2;
-    const x1 = centerX + Math.cos(a) * pocketRadius * 0.12;
-    const y1 = centerY + Math.sin(a) * pocketRadius * 0.12;
+    const x1 = centerX + Math.cos(a) * pocketRadius * 0.15;
+    const y1 = centerY + Math.sin(a) * pocketRadius * 0.15;
     const x2 = centerX + Math.cos(a) * pocketRadius;
     const y2 = centerY + Math.sin(a) * pocketRadius;
-    const fretGrad = ctx.createLinearGradient(x1, y1, x2, y2);
-    fretGrad.addColorStop(0, 'rgba(230,220,190,0.35)');
-    fretGrad.addColorStop(1, 'rgba(230,220,190,0.85)');
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
-    ctx.strokeStyle = fretGrad;
-    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = 'rgba(138,106,53,0.55)';
+    ctx.lineWidth = 0.75;
     ctx.stroke();
   }
+
+  // --- Ein einziger dünner Bronze-Rand als reine Linie ---
   ctx.beginPath();
-  ctx.arc(centerX, centerY, pocketRadius, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(230,220,190,0.6)';
-  ctx.lineWidth = 1.5;
+  ctx.arc(centerX, centerY, pocketRadius + 2, 0, Math.PI * 2);
+  ctx.strokeStyle = '#8a6a35';
+  ctx.lineWidth = 2.5;
   ctx.stroke();
 
-  // --- Nabe ---
+  // --- Flache Nabe, keine Speichen ---
   const hubR = pocketRadius * 0.30;
-  const hubGrad = ctx.createRadialGradient(
-    centerX - hubR * 0.3, centerY - hubR * 0.4, hubR * 0.1,
-    centerX, centerY, hubR
-  );
-  hubGrad.addColorStop(0, '#f2e6c4');
-  hubGrad.addColorStop(0.4, '#b8934a');
-  hubGrad.addColorStop(1, '#4a3512');
   ctx.beginPath();
   ctx.arc(centerX, centerY, hubR, 0, Math.PI * 2);
-  ctx.fillStyle = hubGrad;
+  ctx.fillStyle = '#8a6a35';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,240,200,0.5)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Speichen mit Verjüngung + Nieten
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2 + rotation;
-    const sx = centerX + Math.cos(a) * hubR;
-    const sy = centerY + Math.sin(a) * hubR;
-    const ex = centerX + Math.cos(a) * pocketRadius * 0.97;
-    const ey = centerY + Math.sin(a) * pocketRadius * 0.97;
-    const spokeGrad = ctx.createLinearGradient(sx, sy, ex, ey);
-    spokeGrad.addColorStop(0, '#e8d9ad');
-    spokeGrad.addColorStop(1, '#7a5c1f');
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(ex, ey);
-    ctx.strokeStyle = spokeGrad;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(centerX + Math.cos(a) * pocketRadius * 0.55, centerY + Math.sin(a) * pocketRadius * 0.55, 1.6, 0, Math.PI * 2);
-    ctx.fillStyle = '#f2e6c4';
-    ctx.fill();
-  }
-
-  // Zentrale Kappe
   ctx.beginPath();
-  ctx.arc(centerX, centerY, hubR * 0.28, 0, Math.PI * 2);
-  ctx.fillStyle = '#2a1c08';
+  ctx.arc(centerX, centerY, hubR * 0.34, 0, Math.PI * 2);
+  ctx.fillStyle = '#5c451f';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,240,200,0.4)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
+
+  // --- Eine einzige sehr sanfte Vignette (einziger Verlauf im ganzen Kessel) ---
+  const vignette = ctx.createRadialGradient(centerX, centerY, wheelRadius * 0.72, centerX, centerY, wheelRadius);
+  vignette.addColorStop(0, 'rgba(0,0,0,0)');
+  vignette.addColorStop(1, 'rgba(0,0,0,0.3)');
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, wheelRadius, 0, Math.PI * 2);
+  ctx.fillStyle = vignette;
+  ctx.fill();
 
   ctx.restore();
 }
@@ -234,22 +152,18 @@ function drawBall(angle, radius) {
   const r = Math.max(3, wheelRadius * 0.034);
 
   ctx.beginPath();
-  ctx.arc(x + r * 0.25, y + r * 0.25, r * 1.05, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.arc(x, y + r * 0.3, r * 0.9, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.fill();
 
-  const grad = ctx.createRadialGradient(x - r * 0.4, y - r * 0.4, r * 0.1, x, y, r);
-  grad.addColorStop(0, '#ffffff');
-  grad.addColorStop(0.55, '#e2e2e2');
-  grad.addColorStop(1, '#9c9c9c');
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = grad;
+  ctx.fillStyle = '#e9e2d0';
   ctx.fill();
 
   ctx.beginPath();
-  ctx.arc(x - r * 0.35, y - r * 0.35, r * 0.28, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.28, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.fill();
 }
 
