@@ -170,7 +170,7 @@ function buildTable() {
     const btn = document.createElement('div');
     btn.className = 'outbet dozen';
     btn.textContent = dozenLabels[i];
-    btn.title = dozenTitles[i];
+    btn.dataset.tooltip = dozenTitles[i];
     btn.style.width = (CELL_W * 4) + 'px';
     btn.addEventListener('click', () => onZoneClick(btn, 'dozen', dozenNumbers(i)));
     els.dozensRow.appendChild(btn);
@@ -242,20 +242,40 @@ function setControlsEnabled(enabled) {
 
 let msgTimer = null;
 function flashMessage(text) {
-  els.result.textContent = text;
   els.result.className = 'result-banner info open';
+  els.result.textContent = text;
   clearTimeout(msgTimer);
   msgTimer = setTimeout(() => els.result.classList.remove('open'), 2200);
+}
+
+function countUpAmount(el, target, duration) {
+  if (!el) return;
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = '+' + Math.round(eased * target) + ' €';
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 function showResult(winningNumber, totalReturn, stake, winningBets) {
   const net = totalReturn - stake;
   const color = numColor(winningNumber);
   const colorLabel = color === 'green' ? 'Grün' : color === 'red' ? 'Rot' : 'Schwarz';
-  let text = `${winningNumber} (${colorLabel}) — `;
-  text += net > 0 ? `Gewinn: +${net.toFixed(0)} €` : net === 0 ? 'Unentschieden' : `Verlust: ${net.toFixed(0)} €`;
-  els.result.textContent = text;
-  els.result.className = 'result-banner open ' + (net > 0 ? 'win' : net < 0 ? 'lose' : 'push');
+  const state = net > 0 ? 'win' : net < 0 ? 'lose' : 'push';
+  const lbl = net > 0 ? 'Gewonnen' : net < 0 ? 'Kein Treffer' : 'Unentschieden';
+  const amtText = net > 0 ? '+0 €' : (net.toFixed(0) + ' €');
+
+  els.result.className = 'result-banner open ' + state;
+  els.result.innerHTML =
+    '<span class="lbl">' + lbl + '</span>' +
+    '<span class="amt" id="resultAmt">' + amtText + '</span>' +
+    '<span class="sub">Zahl ' + winningNumber + ' &middot; ' + colorLabel + '</span>';
+
+  if (net > 0) countUpAmount($('resultAmt'), net, 650);
+
   clearTimeout(msgTimer);
   msgTimer = setTimeout(() => els.result.classList.remove('open'), 3200);
 }

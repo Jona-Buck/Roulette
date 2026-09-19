@@ -121,23 +121,45 @@ h1 {
 .hist-chip.black { background: var(--black); }
 .hist-chip.green { background: var(--green); }
 
-/* ---------- Ergebnis (einfache Fassung – Text-Karte folgt in Etappe 4) ---------- */
+/* ---------- Ergebnis: Text-Karte (Entscheidung 8) ---------- */
 #resultBanner {
   text-align: center;
   min-height: 18px;
-  margin-top: 12px;
-  font-size: 13px;
-  font-weight: 600;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 12.5px;
   opacity: 0;
-  transition: opacity .3s ease;
+  transform: translateY(6px);
+  transition: opacity .3s cubic-bezier(.25,.1,.25,1), transform .3s cubic-bezier(.25,.1,.25,1);
 }
-#resultBanner.open { opacity: 1; }
-#resultBanner.win  { color: var(--bronze-lt); }
-#resultBanner.lose { color: var(--muted); }
-#resultBanner.push, #resultBanner.info { color: var(--muted); }
+#resultBanner.open { opacity: 1; transform: translateY(0); }
+#resultBanner .lbl {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+#resultBanner.win .lbl { color: var(--bronze-lt); }
+#resultBanner .amt {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 2px;
+}
+#resultBanner .sub {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
 
 /* ---------- Wettfeld (Feinschliff folgt in Etappe 3) ---------- */
 #tableOuter {
+  position: relative;
   background: var(--felt);
   border: 1px solid var(--bronze);
   border-radius: 6px;
@@ -145,10 +167,31 @@ h1 {
   overflow-x: auto;
   max-width: 100%;
 }
+#tableOuter::after {
+  content: '';
+  position: absolute;
+  top: 14px; bottom: 14px; right: 0;
+  width: 22px;
+  background: linear-gradient(90deg, transparent, var(--felt));
+  pointer-events: none;
+}
+#scrollHint {
+  display: none;
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+@media (hover: none) and (pointer: coarse) {
+  #scrollHint { display: block; }
+}
 #tableWrap { display: flex; align-items: flex-start; }
 #zeroCell {
+  position: sticky;
+  left: 0;
+  z-index: 15;
   background: var(--green);
-  box-shadow: 0 0 0 0.5px var(--muted);
+  box-shadow: 0 0 0 0.5px var(--muted), 2px 0 6px rgba(0,0,0,.4);
   color: var(--text);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-mono); font-weight: 700; font-size: 20px;
@@ -188,6 +231,27 @@ h1 {
 .outbet.black { background: var(--black); }
 
 #dozensRow, #outsideRow { display: flex; margin-top: 2px; margin-left: 54px; }
+
+.outbet.dozen { position: relative; }
+.outbet.dozen::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--second);
+  border: 1px solid rgba(124,115,100,.4);
+  border-radius: 4px;
+  padding: 5px 9px;
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease-out, transform .16s ease-out;
+  z-index: 30;
+}
+.outbet.dozen:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 .disabled { pointer-events: none; opacity: .4; }
 
@@ -248,10 +312,10 @@ button.action {
   padding: 11px 20px;
   font-family: var(--font-ui); font-weight: 600; font-size: 12.5px;
   cursor: pointer;
-  transition: filter .18s ease-out, transform .18s ease-out;
+  transition: filter .24s cubic-bezier(.25,.1,.25,1), transform .24s cubic-bezier(.25,.1,.25,1);
 }
-button.action:hover:not(:disabled) { filter: brightness(1.12); }
-button.action:active:not(:disabled) { transform: scale(.97); }
+button.action:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+button.action:active:not(:disabled) { transform: translateY(0) scale(.97); }
 button.action:disabled { opacity: .4; cursor: not-allowed; }
 button.secondary { background: var(--second); border: 1px solid rgba(124,115,100,.4); color: var(--text); }
 button.primary   { background: var(--bronze); color: var(--ink); }
