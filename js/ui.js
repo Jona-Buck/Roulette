@@ -3,6 +3,7 @@
 const CELL_W = 54, CELL_H = 48, STREET_H = 16, SPLIT_W = 16, CORNER = 18, ZERO_W = 54, COL_BTN_W = 52;
 
 let els = {};
+let markerElements = {}; // bet.key -> DOM-Element, das den zugehörigen .chip-marker trägt
 
 function $(id) { return document.getElementById(id); }
 
@@ -26,8 +27,14 @@ function initUI() {
   });
   els.undoBtn.addEventListener('click', () => {
     if (S.spinning) return;
-    undoLastBet();
-    renderActiveBets();
+    const removed = undoLastBet();
+    if (removed) {
+      const el = markerElements[removed.key];
+      const marker = el && el.querySelector('.chip-marker');
+      if (marker) marker.remove();
+      delete markerElements[removed.key];
+    }
+    updateBalanceUI();
   });
   els.brokeReset.addEventListener('click', () => {
     S.bal = STARTING_BALANCE;
@@ -196,6 +203,7 @@ function onZoneClick(el, type, numbers) {
     return;
   }
   const bet = placeBet(type, numbers, S.chip, el.title || el.textContent);
+  markerElements[bet.key] = el;
   spawnChipMarker(el, bet.amount);
   updateBalanceUI();
 }
@@ -215,6 +223,7 @@ function spawnChipMarker(el, amount) {
 
 function renderActiveBets() {
   document.querySelectorAll('.chip-marker').forEach(m => m.remove());
+  markerElements = {};
   updateBalanceUI();
 }
 

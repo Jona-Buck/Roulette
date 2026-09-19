@@ -220,22 +220,25 @@ h1 {
 .chip {
   width: 46px; height: 46px; border-radius: 50%; border: none;
   cursor: pointer; position: relative;
+  background: repeating-conic-gradient(var(--chip-color) 0deg 18deg, var(--text) 18deg 36deg);
   box-shadow: 0 3px 8px rgba(0,0,0,.4);
   transition: transform .22s cubic-bezier(.25,.1,.25,1);
 }
 .chip::after {
   content: attr(data-val);
-  position: absolute; inset: 8px; border-radius: 50%;
+  position: absolute; inset: 7px; border-radius: 50%;
+  background: var(--chip-color);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-mono); font-weight: 700; font-size: 11px;
+  color: var(--chip-text);
 }
 .chip:hover { transform: translateY(-2px); }
 .chip.selected { box-shadow: 0 0 0 2px var(--bronze-lt), 0 3px 8px rgba(0,0,0,.4); }
-.chip-1   { background: #cbc3ae; } .chip-1::after   { background: #cbc3ae; color: var(--ink); }
-.chip-5   { background: var(--red); } .chip-5::after   { background: var(--red); color: var(--text); }
-.chip-10  { background: #274a63; } .chip-10::after  { background: #274a63; color: var(--text); }
-.chip-25  { background: var(--green); } .chip-25::after  { background: var(--green); color: var(--text); }
-.chip-100 { background: var(--black); } .chip-100::after { background: var(--black); color: var(--text); }
+.chip-1   { --chip-color: #cbc3ae;  --chip-text: var(--ink); }
+.chip-5   { --chip-color: var(--red);   --chip-text: var(--text); }
+.chip-10  { --chip-color: #274a63;  --chip-text: var(--text); }
+.chip-25  { --chip-color: var(--green); --chip-text: var(--text); }
+.chip-100 { --chip-color: var(--black); --chip-text: var(--text); }
 
 /* ---------- Controls ---------- */
 #controls { display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
