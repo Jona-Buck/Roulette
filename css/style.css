@@ -85,6 +85,7 @@ h1 {
   flex-direction: column;
   gap: 26px;
   width: 100%;
+  min-width: 0;
   align-items: center;
 }
 @media (min-width: 980px) {
@@ -92,6 +93,7 @@ h1 {
   #wheelZone { flex: 0 0 250px; position: sticky; top: 20px; }
   #tableZone { flex: 0 1 auto; }
 }
+#tableZone { width: 100%; min-width: 0; }
 
 /* ---------- Kessel-Zone (Feinschliff folgt in Etappe 2) ---------- */
 #wheelStage { display: flex; justify-content: center; padding: 4px 0; }

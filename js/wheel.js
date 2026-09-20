@@ -89,7 +89,7 @@ function drawWheel(rotation) {
 
     ctx.save();
     ctx.translate(centerX, centerY);
-    ctx.rotate(mid);
+    ctx.rotate(mid + Math.PI / 2);
     ctx.fillStyle = '#e9e2d0';
     ctx.font = `600 ${Math.max(10, pocketRadius * 0.115)}px ${WHEEL_FONT}`;
     ctx.textAlign = 'center';
