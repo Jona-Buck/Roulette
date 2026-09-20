@@ -217,6 +217,7 @@ h1 {
 
 .zone { position: absolute; cursor: pointer; z-index: 3; }
 .zone.corner { z-index: 5; }
+.zone:hover:not(.disabled) { background: rgba(194,160,90,.4); }
 
 #colBtns { display: flex; flex-direction: column; flex-shrink: 0; }
 .outbet {
@@ -281,7 +282,7 @@ h1 {
 }
 
 /* ---------- Chip-Leiste (vorläufige Wertfarben – Etappe 3 verfeinert Randstreifen) ---------- */
-#trayRow { margin-top: 6px; }
+#trayRow { margin-top: 16px; }
 #chipTray { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .chip {
   width: 46px; height: 46px; border-radius: 50%; border: none;
@@ -307,7 +308,7 @@ h1 {
 .chip-100 { --chip-color: var(--black); --chip-text: var(--text); }
 
 /* ---------- Controls ---------- */
-#controls { display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
+#controls { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
 button.action {
   display: flex; align-items: center; gap: 7px;
   border: none; border-radius: 5px;
