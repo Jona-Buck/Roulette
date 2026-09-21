@@ -180,7 +180,7 @@ function spinBallTo(winningNumber, durationMs, onDone) {
   const targetAbsAngle = angleForNumber(winningNumber) + wheelEnd;
 
   const ballStart = ballState.angle;
-  const rotations = 6 + Math.random() * 2.2;
+  const rotations = Math.round(6 + Math.random() * 2.2); // MUSS ganzzahlig sein: nur volle Umdrehungen ändern den Zielwinkel mod 2π nicht
   let target = targetAbsAngle;
   while (target < ballStart) target += Math.PI * 2;
   const totalAngle = (target - ballStart) + rotations * Math.PI * 2;
