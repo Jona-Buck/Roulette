@@ -169,14 +169,6 @@ h1 {
   overflow-x: auto;
   max-width: 100%;
 }
-#tableOuter::after {
-  content: '';
-  position: absolute;
-  top: 14px; bottom: 14px; right: 0;
-  width: 22px;
-  background: linear-gradient(90deg, transparent, var(--felt));
-  pointer-events: none;
-}
 #scrollHint {
   display: none;
   text-align: center;
@@ -221,6 +213,9 @@ h1 {
 
 #colBtns { display: flex; flex-direction: column; flex-shrink: 0; }
 .outbet {
+  position: relative;
+  height: 34px;
+  padding: 4px 6px;
   background: var(--felt);
   box-shadow: 0 0 0 0.5px var(--muted);
   color: var(--text);
@@ -235,7 +230,6 @@ h1 {
 
 #dozensRow, #outsideRow { display: flex; margin-top: 2px; margin-left: 54px; }
 
-.outbet.dozen { position: relative; }
 .outbet.dozen::after {
   content: attr(data-tooltip);
   position: absolute;
