@@ -7,7 +7,7 @@ const S = {
   history: []             // letzte Gewinnzahlen, neueste zuerst
 };
 
-const SPIN_DURATION_MS = 4200;
+const SPIN_DURATION_MS = 5000;
 
 function canPlaceBet(amount) {
   return !S.spinning && (totalStaked() + amount) <= S.bal;

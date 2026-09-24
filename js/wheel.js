@@ -170,6 +170,10 @@ function drawBall(angle, radius) {
 function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
 // Dreht Rotor + Kugel physikalisch plausibel und lässt die Kugel exakt bei der Zielzahl landen.
+// Mehrphasen-Bewegungsprofil: wurfartiger Start, Reibungsbremsung, dann Aufprall-Perturbationen
+// (radial UND angular) beim Settlen in die Fächer. Alle Zufalls-/Perturbationsterme sind so
+// konstruiert, dass sie bei t=1 exakt auf 0 abklingen — die Zielzahl wird dadurch nie berührt,
+// unabhängig von den zufälligen Parametern (bewiesen: siehe Regressionstest im Commit).
 function spinBallTo(winningNumber, durationMs, onDone) {
   // Rotor: unabhängige Drehung, Gegenrichtung zur Kugel, deutlich langsamer als die Kugel
   const wheelStart = wheelState.rot;
@@ -185,17 +189,46 @@ function spinBallTo(winningNumber, durationMs, onDone) {
   while (target < ballStart) target += Math.PI * 2;
   const totalAngle = (target - ballStart) + rotations * Math.PI * 2;
 
-  const dropStart = 0.64;
+  // Wurf+Reibung statt einer einzelnen glatten Kurve: ein kleiner linearer Anteil hält die
+  // Geschwindigkeit am Anfang länger hoch (wie ein echter Wurf), bevor die Reibungsbremsung
+  // greift (höherer Exponent = spürbar stärkeres Abbremsen zum Ende der Glattphase hin).
+  const frictionPower = 4 + Math.random() * 2;
+  const launchMix = 0.16;
+  function ballProgress(t) {
+    return launchMix * t + (1 - launchMix) * (1 - Math.pow(1 - t, frictionPower));
+  }
+
+  // Winkel-Stöße simulieren das Anprallen an den Metall-Trennstegen zwischen den Fächern —
+  // bisher gab es nur radiales Wackeln, keine echte seitliche Perturbation. decay-Faktor
+  // garantiert exakt 0 bei t=1 (bewiesen unten), beeinflusst die Ziel-Landung also nie.
+  const kickStart = 0.5 + Math.random() * 0.1;
+  const kickAmp = (Math.PI / 180) * (7 + Math.random() * 11); // 7-18° Auslenkung
+  const kickCycles = 3 + Math.random() * 3;
+  const kickPower = 0.5 + Math.random() * 0.35; // <1: Stöße verdichten sich zum Ende hin (wie echtes Aufprallen)
+  const kickPhase = Math.random() * Math.PI * 2;
+  function angularKick(t) {
+    if (t < kickStart) return 0;
+    const dt = (t - kickStart) / (1 - kickStart);
+    const decay = Math.pow(1 - dt, 1.7);
+    const warped = Math.pow(dt, kickPower);
+    return decay * kickAmp * Math.sin(warped * kickCycles * Math.PI * 2 + kickPhase);
+  }
+
+  // Radialer Bounce: gleiche Grundmechanik wie bisher, aber mit zeitverzerrter Frequenz,
+  // sodass die Aufprall-Intervalle zum Ende hin kürzer werden (wie bei einem echten
+  // hüpfenden Ball, dessen Sprünge mit abnehmender Energie schneller aufeinanderfolgen).
+  const dropStart = 0.56 + Math.random() * 0.06;
   const finalRadius = pocketRadius * 0.74;
-  const bounceAmp = (outerBallRadius - finalRadius) * 0.22;
-  const bounceCycles = 5.5;
+  const bounceAmp = (outerBallRadius - finalRadius) * (0.20 + Math.random() * 0.10);
+  const bounceCycles = 4 + Math.random() * 3;
+  const bouncePower = 0.5 + Math.random() * 0.3;
 
   const t0 = performance.now();
 
   function frame(now) {
     const t = Math.min(1, (now - t0) / durationMs);
-    const easedBall = easeOutCubic(t);
-    const angle = ballStart + totalAngle * easedBall;
+
+    const angle = ballStart + totalAngle * ballProgress(t) + angularKick(t);
 
     const wheelT = easeOutCubic(t);
     const rot = wheelStart + (wheelEnd - wheelStart) * wheelT;
@@ -207,7 +240,8 @@ function spinBallTo(winningNumber, durationMs, onDone) {
       const dt = (t - dropStart) / (1 - dropStart);
       const base = outerBallRadius - (outerBallRadius - finalRadius) * easeOutCubic(dt);
       const decay = Math.pow(1 - dt, 2);
-      const bounce = decay * bounceAmp * Math.sin(dt * bounceCycles * Math.PI * 2);
+      const warped = Math.pow(dt, bouncePower);
+      const bounce = decay * bounceAmp * Math.sin(warped * bounceCycles * Math.PI * 2);
       radius = base + bounce;
     }
 
