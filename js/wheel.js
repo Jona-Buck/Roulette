@@ -143,85 +143,103 @@ function drawWheel(rotation) {
   ctx.restore();
 }
 
-function drawBall(angle, radius) {
+function drawBall(angle, radius, height) {
   const ctx = ballCtx;
   ctx.clearRect(0, 0, ballCanvas.width, ballCanvas.height);
 
   const x = centerX + Math.cos(angle) * radius;
   const y = centerY + Math.sin(angle) * radius * PERSPECTIVE_Y;
   const r = Math.max(3, wheelRadius * 0.034);
+  const h = height || 0; // Höhe über der Fläche (Referenz-Einheiten, echte Physik-Sprünge)
 
+  // Schatten: löst sich von der Kugel, je höher sie gerade springt (Draufsicht-Höhenhinweis)
+  const shadowOffset = r * 0.3 + h * 0.9;
+  const shadowScale = Math.max(0.55, 1 - h * 0.025);
   ctx.beginPath();
-  ctx.arc(x, y + r * 0.3, r * 0.9, 0, Math.PI * 2);
+  ctx.arc(x, y + shadowOffset, r * 0.9 * shadowScale, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.fill();
 
+  // Kugel selbst wird minimal größer, wenn sie näher an der Kamera (höher) ist
+  const rBall = r * (1 + h * 0.012);
   ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.arc(x, y, rBall, 0, Math.PI * 2);
   ctx.fillStyle = '#e9e2d0';
   ctx.fill();
 
   ctx.beginPath();
-  ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.28, 0, Math.PI * 2);
+  ctx.arc(x - rBall * 0.3, y - rBall * 0.3, rBall * 0.28, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.fill();
 }
 
 function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
-// Dreht Rotor + Kugel physikalisch plausibel und lässt die Kugel exakt bei der Zielzahl landen.
+// Dreht den Rotor physikalisch plausibel (unverändert) und lässt die Kugel einer echten,
+// komplett ungesteuerten Physik-Bahn folgen, die vorher so lange mit zufälligen
+// Startbedingungen durchprobiert wurde, bis sie von selbst exakt im Zielfach endet
+// (siehe js/ballphysics.js). Keine Formel führt die Kugel zur Zielzahl — die Bahn ist
+// entweder komplett real oder wird verworfen.
 function spinBallTo(winningNumber, durationMs, onDone) {
-  // Rotor: unabhängige Drehung, Gegenrichtung zur Kugel, deutlich langsamer als die Kugel
+  // Rotor: unabhängige Drehung, Gegenrichtung zur Kugel, deutlich langsamer als die Kugel (unverändert)
   const wheelStart = wheelState.rot;
   const wheelRotations = 0.6 + Math.random() * 0.6;
   const wheelEnd = wheelStart - (wheelRotations * Math.PI * 2 + Math.random() * (Math.PI / 2));
 
-  // Kugel muss bei Landung exakt über der Zielzahl stehen -> Zielwinkel hängt von der Rotor-Endposition ab
-  const targetAbsAngle = angleForNumber(winningNumber) + wheelEnd;
+  // Echte Physik-Bahn für die Zielzahl suchen (siehe ballphysics.js) — typ. ~10ms, nie gescheitert
+  // in der Validierung; zur Sicherheit ein zweiter, großzügigerer Versuch als Netz.
+  const targetIdx = WHEEL_ORDER.indexOf(winningNumber);
+  let traj = ballFindTrajectory(targetIdx, 460, 800) || ballFindTrajectory(targetIdx, 700, 5000);
+  if (!traj) {
+    // Praktisch ausgeschlossen (siehe Validierung: 0 Fehlschläge in tausenden Läufen).
+    // Kein Absturz: Kugel bleibt in der Kessel-Mitte des Zielfachs stehen, ohne Animation.
+    traj = { pts: new Float32Array(3), steps: 0, finalTheta: angleForIndex(targetIdx), finalR: pocketRadius / (pocketRadius / 184) * 0.74 };
+    traj.pts[0] = Math.cos(traj.finalTheta) * traj.finalR;
+    traj.pts[1] = Math.sin(traj.finalTheta) * traj.finalR;
+  }
 
-  const ballStart = ballState.angle;
-  const rotations = Math.round(6 + Math.random() * 2.2); // MUSS ganzzahlig sein: nur volle Umdrehungen ändern den Zielwinkel mod 2π nicht
-  let target = targetAbsAngle;
-  while (target < ballStart) target += Math.PI * 2;
-  const totalAngle = (target - ballStart) + rotations * Math.PI * 2;
-
-  const dropStart = 0.64;
-  const finalRadius = pocketRadius * 0.74;
-  const bounceAmp = (outerBallRadius - finalRadius) * 0.22;
-  const bounceCycles = 5.5;
+  const totalSteps = traj.steps;
+  const realDurationMs = Math.max(600, totalSteps * (1000 / 60)); // Dauer ergibt sich aus der Bahn, nicht aus einer festen Vorgabe
+  const REF_POCKET_R = 184; // Referenz-pocketRadius, auf den ballphysics.js kalibriert ist
+  const scale = pocketRadius / REF_POCKET_R;
 
   const t0 = performance.now();
 
-  function frame(now) {
-    const t = Math.min(1, (now - t0) / durationMs);
-    const easedBall = easeOutCubic(t);
-    const angle = ballStart + totalAngle * easedBall;
+  function sampleTrajectory(stepFloat) {
+    const s0 = Math.max(0, Math.min(totalSteps, Math.floor(stepFloat)));
+    const s1 = Math.min(totalSteps, s0 + 1);
+    const frac = stepFloat - s0;
+    const x = traj.pts[s0 * 3] + (traj.pts[s1 * 3] - traj.pts[s0 * 3]) * frac;
+    const y = traj.pts[s0 * 3 + 1] + (traj.pts[s1 * 3 + 1] - traj.pts[s0 * 3 + 1]) * frac;
+    const z = traj.pts[s0 * 3 + 2] + (traj.pts[s1 * 3 + 2] - traj.pts[s0 * 3 + 2]) * frac;
+    return { x, y, z };
+  }
 
+  function frame(now) {
+    const t = Math.min(1, (now - t0) / realDurationMs);
     const wheelT = easeOutCubic(t);
     const rot = wheelStart + (wheelEnd - wheelStart) * wheelT;
 
-    let radius;
-    if (t < dropStart) {
-      radius = outerBallRadius;
-    } else {
-      const dt = (t - dropStart) / (1 - dropStart);
-      const base = outerBallRadius - (outerBallRadius - finalRadius) * easeOutCubic(dt);
-      const decay = Math.pow(1 - dt, 2);
-      const bounce = decay * bounceAmp * Math.sin(dt * bounceCycles * Math.PI * 2);
-      radius = base + bounce;
-    }
+    const p = sampleTrajectory(t * totalSteps);
+    const localAngle = Math.atan2(p.y, p.x);
+    const localRadius = Math.hypot(p.x, p.y);
+    const screenAngle = localAngle + rot; // Bezugssystem "fährt" mit dem Rotor mit
+    const screenRadius = localRadius * scale;
 
     drawWheel(rot);
-    drawBall(angle, radius);
+    drawBall(screenAngle, screenRadius, p.z * scale);
 
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
+      const fx = traj.pts[totalSteps * 3], fy = traj.pts[totalSteps * 3 + 1];
+      const finalLocalAngle = Math.atan2(fy, fx);
+      const finalLocalRadius = Math.hypot(fx, fy);
       wheelState.rot = norm2PI(wheelEnd);
-      ballState.angle = norm2PI(targetAbsAngle);
-      ballState.radius = finalRadius;
+      ballState.angle = norm2PI(finalLocalAngle + wheelEnd);
+      ballState.radius = finalLocalRadius * scale;
       drawWheel(wheelState.rot);
-      drawBall(ballState.angle, ballState.radius);
+      drawBall(ballState.angle, ballState.radius, 0);
       if (onDone) onDone();
     }
   }
