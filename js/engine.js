@@ -7,7 +7,6 @@ const S = {
   history: []             // letzte Gewinnzahlen, neueste zuerst
 };
 
-const SPIN_DURATION_MS = 4200;
 
 function canPlaceBet(amount) {
   return !S.spinning && (totalStaked() + amount) <= S.bal;
@@ -33,7 +32,7 @@ function doSpin() {
   // Jede Zahl 0-36 ist genau einmal im Kessel vertreten -> Gleichverteilung
   const winningNumber = WHEEL_ORDER[Math.floor(Math.random() * WHEEL_ORDER.length)];
 
-  spinBallTo(winningNumber, SPIN_DURATION_MS, () => {
+  spinBallTo(winningNumber, () => {
     const { totalReturn, winningBets } = calcWinnings(winningNumber);
     S.bal += totalReturn;
     S.history.unshift(winningNumber);
