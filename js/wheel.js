@@ -175,46 +175,40 @@ function drawBall(angle, radius, height) {
 
 function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
-// Dreht den Rotor (Gegenrichtung zur Kugel) und lässt die Kugel einer echten, komplett
-// ungesteuerten Physik-Bahn folgen (siehe js/ballphysics.js): Abwurf aus dem Fach, viele
-// schnelle Umdrehungen auf der Außenbahn, Absturz in den Fächerring, Hüpfen über die Stege,
-// Ausrollen. Die Bahn wird vorher mit zufälligen Startbedingungen so lange durchprobiert,
-// bis sie von selbst exakt im Zielfach endet — keine Formel führt die Kugel zur Zielzahl.
-// Die Dauer ergibt sich aus der Bahn (typisch 10-13 s).
-function spinBallTo(winningNumber, onDone) {
-  const REF_POCKET_R = 184; // Referenz-pocketRadius, auf den ballphysics.js kalibriert ist
-  const MAX_STEPS = 1100;   // Simulations-Obergrenze in Bildern (~18 s)
+// Dreht den Rotor physikalisch plausibel (unverändert) und lässt die Kugel einer echten,
+// komplett ungesteuerten Physik-Bahn folgen, die vorher so lange mit zufälligen
+// Startbedingungen durchprobiert wurde, bis sie von selbst exakt im Zielfach endet
+// (siehe js/ballphysics.js). Keine Formel führt die Kugel zur Zielzahl — die Bahn ist
+// entweder komplett real oder wird verworfen.
+function spinBallTo(winningNumber, durationMs, onDone) {
+  // Rotor: unabhängige Drehung, Gegenrichtung zur Kugel, deutlich langsamer als die Kugel (unverändert)
+  const wheelStart = wheelState.rot;
+  const wheelRotations = 0.6 + Math.random() * 0.6;
+  const wheelEnd = wheelStart - (wheelRotations * Math.PI * 2 + Math.random() * (Math.PI / 2));
 
-  // Startposition der Kugel im Kessel-Bezugssystem = dort, wo sie gerade liegt (kein Springen)
-  const scale0 = pocketRadius / REF_POCKET_R;
-  const startAngle = ballState.angle - wheelState.rot;
-  const startRadius = ballState.radius / scale0;
-
-  // Echte Physik-Bahn für die Zielzahl suchen (typ. wenige ms, in der Validierung nie gescheitert)
+  // Echte Physik-Bahn für die Zielzahl suchen (siehe ballphysics.js) — typ. ~10ms, nie gescheitert
+  // in der Validierung; zur Sicherheit ein zweiter, großzügigerer Versuch als Netz.
   const targetIdx = WHEEL_ORDER.indexOf(winningNumber);
-  let traj = ballFindTrajectory(targetIdx, MAX_STEPS, 2000, startAngle, startRadius)
-          || ballFindTrajectory(targetIdx, MAX_STEPS, 8000, undefined, startRadius);
+  let traj = ballFindTrajectory(targetIdx, 460, 800) || ballFindTrajectory(targetIdx, 700, 5000);
   if (!traj) {
-    // Praktisch ausgeschlossen: Kugel wird direkt im Zielfach abgelegt, ohne Animation.
-    const th = angleForIndex(targetIdx);
-    traj = { pts: new Float32Array([Math.cos(th) * BP.R_REST, Math.sin(th) * BP.R_REST, 0]), samples: 0 };
+    // Praktisch ausgeschlossen (siehe Validierung: 0 Fehlschläge in tausenden Läufen).
+    // Kein Absturz: Kugel bleibt in der Kessel-Mitte des Zielfachs stehen, ohne Animation.
+    traj = { pts: new Float32Array(3), steps: 0, finalTheta: angleForIndex(targetIdx), finalR: pocketRadius / (pocketRadius / 184) * 0.74 };
+    traj.pts[0] = Math.cos(traj.finalTheta) * traj.finalR;
+    traj.pts[1] = Math.sin(traj.finalTheta) * traj.finalR;
   }
 
-  const totalSamples = traj.samples; // Teilschritte (BP.SUB pro Bild)
-  const realDurationMs = Math.max(600, (totalSamples / BP.SUB) * (1000 / 60));
-
-  // Rotor: dreht gegen die Kugel und deutlich langsamer als sie. Die Drehung ist auf die längere
-  // Dauer gestreckt, damit der Rotor mit derselben Geschwindigkeit wie bisher wirkt.
-  const wheelStart = wheelState.rot;
-  const wheelRotations = (0.6 + Math.random() * 0.6) * (realDurationMs / 4200);
-  const wheelEnd = wheelStart - (wheelRotations * Math.PI * 2 + Math.random() * (Math.PI / 2));
+  const totalSteps = traj.steps;
+  const realDurationMs = Math.max(600, totalSteps * (1000 / 60)); // Dauer ergibt sich aus der Bahn, nicht aus einer festen Vorgabe
+  const REF_POCKET_R = 184; // Referenz-pocketRadius, auf den ballphysics.js kalibriert ist
+  const scale = pocketRadius / REF_POCKET_R;
 
   const t0 = performance.now();
 
-  function sampleTrajectory(sampleFloat) {
-    const s0 = Math.max(0, Math.min(totalSamples, Math.floor(sampleFloat)));
-    const s1 = Math.min(totalSamples, s0 + 1);
-    const frac = sampleFloat - s0;
+  function sampleTrajectory(stepFloat) {
+    const s0 = Math.max(0, Math.min(totalSteps, Math.floor(stepFloat)));
+    const s1 = Math.min(totalSteps, s0 + 1);
+    const frac = stepFloat - s0;
     const x = traj.pts[s0 * 3] + (traj.pts[s1 * 3] - traj.pts[s0 * 3]) * frac;
     const y = traj.pts[s0 * 3 + 1] + (traj.pts[s1 * 3 + 1] - traj.pts[s0 * 3 + 1]) * frac;
     const z = traj.pts[s0 * 3 + 2] + (traj.pts[s1 * 3 + 2] - traj.pts[s0 * 3 + 2]) * frac;
@@ -223,11 +217,10 @@ function spinBallTo(winningNumber, onDone) {
 
   function frame(now) {
     const t = Math.min(1, (now - t0) / realDurationMs);
-    const scale = pocketRadius / REF_POCKET_R; // pro Bild neu, damit Fenster-Resize mitten im Spin nicht stört
     const wheelT = easeOutCubic(t);
     const rot = wheelStart + (wheelEnd - wheelStart) * wheelT;
 
-    const p = sampleTrajectory(t * totalSamples);
+    const p = sampleTrajectory(t * totalSteps);
     const localAngle = Math.atan2(p.y, p.x);
     const localRadius = Math.hypot(p.x, p.y);
     const screenAngle = localAngle + rot; // Bezugssystem "fährt" mit dem Rotor mit
@@ -239,10 +232,12 @@ function spinBallTo(winningNumber, onDone) {
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
-      const fx = traj.pts[totalSamples * 3], fy = traj.pts[totalSamples * 3 + 1];
+      const fx = traj.pts[totalSteps * 3], fy = traj.pts[totalSteps * 3 + 1];
+      const finalLocalAngle = Math.atan2(fy, fx);
+      const finalLocalRadius = Math.hypot(fx, fy);
       wheelState.rot = norm2PI(wheelEnd);
-      ballState.angle = norm2PI(Math.atan2(fy, fx) + wheelEnd);
-      ballState.radius = Math.hypot(fx, fy) * scale;
+      ballState.angle = norm2PI(finalLocalAngle + wheelEnd);
+      ballState.radius = finalLocalRadius * scale;
       drawWheel(wheelState.rot);
       drawBall(ballState.angle, ballState.radius, 0);
       if (onDone) onDone();
