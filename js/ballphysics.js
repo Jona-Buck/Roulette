@@ -112,6 +112,7 @@ function ballSimulate(P, maxSteps) {
   let steps = L;
   let collisions = 0;
   let hops = 0;
+  let dropStep = 0; // Bild, in dem die Kugel die Bahn verlässt und in den Fächerring fällt
 
   for (let s = L + 1; s <= maxSteps; s++) {
     const dt = 1 / B.SUB;
@@ -132,7 +133,7 @@ function ballSimulate(P, maxSteps) {
           const vr = vx * nx + vy * ny;
           if (vr > 0) { vx -= (1 + B.E_WALL) * vr * nx; vy -= (1 + B.E_WALL) * vr * ny; }
         }
-        if (rr < B.R_EDGE) { phase = 1; z = B.Z_TRACK; vz = 0; }
+        if (rr < B.R_EDGE) { phase = 1; z = B.Z_TRACK; vz = 0; dropStep = s; }
       } else {
         // --- senkrecht: fallen, aufprallen, hüpfen
         vz -= B.G_Z * dt;
@@ -235,7 +236,7 @@ function ballSimulate(P, maxSteps) {
   }
   const settled = phase === 1 && z === 0 && vz === 0 && Math.hypot(vx, vy) < 0.05;
   const finalPocket = ballPocketAt(Math.atan2(y, x));
-  return { pts, steps, settled, finalPocket, finalR: Math.hypot(x, y), finalTheta: Math.atan2(y, x), collisions, hops };
+  return { pts, steps, settled, finalPocket, finalR: Math.hypot(x, y), finalTheta: Math.atan2(y, x), collisions, hops, dropStep };
 }
 
 // Sucht per Zufalls-Ausprobieren eine echte, ungesteuerte Flugbahn, die von selbst

@@ -203,6 +203,31 @@ function spinBallTo(winningNumber, durationMs, onDone) {
   const REF_POCKET_R = 184; // Referenz-pocketRadius, auf den ballphysics.js kalibriert ist
   const scale = pocketRadius / REF_POCKET_R;
 
+  // Drehrichtung der Kugel auf der Außenbahn: Auf dem Bildschirm zog der Rotor die Kugel bisher meist in
+  // seine eigene Richtung mit (er dreht schneller als die Kugel im Kessel läuft). Jetzt läuft die Kugel auf
+  // der Bahn immer gegen den Rotor (der Rotor dreht stets negativ, die Kugel also im Uhrzeigersinn). Das
+  // Tempo-Profil der Kugel bleibt wie es war (nur ihre Richtung wird festgelegt), am Absturzpunkt trifft sie
+  // exakt die bisherige Position. Absturz und alles danach (Hüpfen im Fächerring, Landung) bleibt unverändert.
+  const dropStep = Math.min(traj.dropStep || 0, totalSteps);
+  const rotAt = (s) => wheelStart + (wheelEnd - wheelStart) * easeOutCubic(s / totalSteps);
+  let dropScreenAngle = 0;
+  const trackPath = []; // Weg der Kugel relativ zum Absturzpunkt (<= 0, wächst bis 0 am Absturz)
+  if (dropStep > 0) {
+    const trackAngle = [Math.atan2(traj.pts[1], traj.pts[0])]; // abgewickelter Kessel-Winkel auf der Bahn
+    for (let s = 1; s <= dropStep; s++) {
+      let d = Math.atan2(traj.pts[s * 3 + 1], traj.pts[s * 3]) - (trackAngle[s - 1] % (Math.PI * 2));
+      while (d > Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      trackAngle.push(trackAngle[s - 1] + d);
+    }
+    dropScreenAngle = trackAngle[dropStep] + rotAt(dropStep);
+    trackPath[dropStep] = 0;
+    for (let s = dropStep - 1; s >= 0; s--) {
+      const stepOnScreen = (trackAngle[s + 1] - trackAngle[s]) + (rotAt(s + 1) - rotAt(s));
+      trackPath[s] = trackPath[s + 1] - Math.abs(stepOnScreen);
+    }
+  }
+
   const t0 = performance.now();
 
   function sampleTrajectory(stepFloat) {
@@ -220,10 +245,15 @@ function spinBallTo(winningNumber, durationMs, onDone) {
     const wheelT = easeOutCubic(t);
     const rot = wheelStart + (wheelEnd - wheelStart) * wheelT;
 
-    const p = sampleTrajectory(t * totalSteps);
+    const stepF = t * totalSteps;
+    const p = sampleTrajectory(stepF);
     const localAngle = Math.atan2(p.y, p.x);
     const localRadius = Math.hypot(p.x, p.y);
-    const screenAngle = localAngle + rot; // Bezugssystem "fährt" mit dem Rotor mit
+    let screenAngle = localAngle + rot; // Bezugssystem "fährt" mit dem Rotor mit
+    if (stepF < dropStep) {
+      const s0 = Math.floor(stepF), s1 = Math.min(dropStep, s0 + 1);
+      screenAngle = dropScreenAngle + trackPath[s0] + (trackPath[s1] - trackPath[s0]) * (stepF - s0);
+    }
     const screenRadius = localRadius * scale;
 
     drawWheel(rot);
