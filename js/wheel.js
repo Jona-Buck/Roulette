@@ -203,28 +203,23 @@ function spinBallTo(winningNumber, durationMs, onDone) {
   const REF_POCKET_R = 184; // Referenz-pocketRadius, auf den ballphysics.js kalibriert ist
   const scale = pocketRadius / REF_POCKET_R;
 
-  // Drehrichtung der Kugel auf der Außenbahn: Auf dem Bildschirm zog der Rotor die Kugel bisher meist in
-  // seine eigene Richtung mit (er dreht schneller als die Kugel im Kessel läuft). Jetzt läuft die Kugel auf
-  // der Bahn immer gegen den Rotor (der Rotor dreht stets negativ, die Kugel also im Uhrzeigersinn). Das
-  // Tempo-Profil der Kugel bleibt wie es war (nur ihre Richtung wird festgelegt), am Absturzpunkt trifft sie
-  // exakt die bisherige Position. Absturz und alles danach (Hüpfen im Fächerring, Landung) bleibt unverändert.
+  // Außenbahn: Die Kugel läuft immer im Uhrzeigersinn, also gegen den Rotor (der dreht stets negativ), und
+  // deutlich schneller als dieser: Start mit ca. 2-2,8 Umdrehungen pro Sekunde, dann sanft abgebremst bis
+  // zum Absturzpunkt. Dort trifft sie exakt die Position der Simulation und ist nahezu im Tempo des
+  // Rotors, sodass der Übergang ruckfrei ist. Radius und Höhe kommen weiter aus der Simulation;
+  // Absturz, Hüpfen im Fächerring und Landung bleiben unverändert.
   const dropStep = Math.min(traj.dropStep || 0, totalSteps);
   const rotAt = (s) => wheelStart + (wheelEnd - wheelStart) * easeOutCubic(s / totalSteps);
   let dropScreenAngle = 0;
   const trackPath = []; // Weg der Kugel relativ zum Absturzpunkt (<= 0, wächst bis 0 am Absturz)
   if (dropStep > 0) {
-    const trackAngle = [Math.atan2(traj.pts[1], traj.pts[0])]; // abgewickelter Kessel-Winkel auf der Bahn
-    for (let s = 1; s <= dropStep; s++) {
-      let d = Math.atan2(traj.pts[s * 3 + 1], traj.pts[s * 3]) - (trackAngle[s - 1] % (Math.PI * 2));
-      while (d > Math.PI) d -= Math.PI * 2;
-      while (d < -Math.PI) d += Math.PI * 2;
-      trackAngle.push(trackAngle[s - 1] + d);
-    }
-    dropScreenAngle = trackAngle[dropStep] + rotAt(dropStep);
+    dropScreenAngle = Math.atan2(traj.pts[dropStep * 3 + 1], traj.pts[dropStep * 3]) + rotAt(dropStep);
+    const stepSec = realDurationMs / 1000 / totalSteps;
+    const w0 = (2.0 + Math.random() * 0.8) * Math.PI * 2 * stepSec; // Startgeschwindigkeit in rad pro Schritt
     trackPath[dropStep] = 0;
     for (let s = dropStep - 1; s >= 0; s--) {
-      const stepOnScreen = (trackAngle[s + 1] - trackAngle[s]) + (rotAt(s + 1) - rotAt(s));
-      trackPath[s] = trackPath[s + 1] - Math.abs(stepOnScreen);
+      const u = (s + 0.5) / dropStep; // Fortschritt auf der Bahn 0..1
+      trackPath[s] = trackPath[s + 1] - w0 * Math.pow(1 - u, 1.5);
     }
   }
 
